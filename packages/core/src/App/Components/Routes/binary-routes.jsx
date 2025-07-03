@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch, Prompt, useLocation } from 'react-router-dom';
+import { Switch, Prompt, Route, Redirect, useLocation } from 'react-router-dom';
 import { Loading } from '@deriv/components';
 import getRoutesConfig from 'App/Constants/routes-config';
 import RouteWithSubRoutes from './route-with-sub-routes.jsx';
