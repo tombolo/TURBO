@@ -1,73 +1,56 @@
-import LZString from 'lz-string';
-import localForage from 'localforage';
 import DBotStore from '../scratch/dbot-store';
 import { save_types } from '../constants/save-type';
-/**
- * Save workspace to localStorage
- * @param {String} save_type // constants/save_types.js (unsaved, local, googledrive)
- * @param {Blockly.Events} event // Blockly event object
- */
+
+// Import XML files as raw text
+
+import overUnderXml from './bots/binary_smasher.xml?raw';
+import nilotemine from './bots/nilote_mine.xml?raw';
+
+// Load bot XMLs from imported files
+export const getStaticBots = async () => {
+    return [
+        {
+            id: 'binary_smasher',
+            name: 'binary_smasher',
+            xml: overUnderXml,
+            timestamp: Date.now(),
+            save_type: save_types.LOCAL,
+        },
+        {
+            id: 'nilote_mine',
+            name: 'nilote_mine',
+            xml: nilotemine,
+            timestamp: Date.now(),
+            save_type: save_types.LOCAL,
+        },
+    ];
+};
+
+// Save logic just updates the UI with current static list (no saving to storage)
 export const saveWorkspaceToRecent = async (xml, save_type = save_types.UNSAVED) => {
     const xml_dom = convertStrategyToIsDbot(xml);
+    xml_dom.setAttribute('is_dbot', true);
+
     const {
         load_modal: { updateListStrategies },
-        save_modal,
     } = DBotStore.instance;
 
-    const workspace_id = Blockly.derivWorkspace.current_strategy_id || Blockly.utils.idGenerator.genUid();
-    const workspaces = await getSavedWorkspaces();
-    const current_xml = Blockly.Xml.domToText(xml_dom);
-    const current_timestamp = Date.now();
-    const current_workspace_index = workspaces.findIndex(workspace => workspace.id === workspace_id);
-
-    if (current_workspace_index >= 0) {
-        const current_workspace = workspaces[current_workspace_index];
-        current_workspace.xml = current_xml;
-        current_workspace.name = save_modal.bot_name;
-        current_workspace.timestamp = current_timestamp;
-        current_workspace.save_type = save_type;
-    } else {
-        workspaces.push({
-            id: workspace_id,
-            timestamp: current_timestamp,
-            name: save_modal.bot_name,
-            xml: current_xml,
-            save_type,
-        });
-    }
-
-    workspaces
-        .sort((a, b) => {
-            return new Date(a.timestamp) - new Date(b.timestamp);
-        })
-        .reverse();
-
-    if (workspaces.length > 10) {
-        workspaces.pop();
-    }
-    updateListStrategies(workspaces);
-    localForage.setItem('saved_workspaces', LZString.compress(JSON.stringify(workspaces)));
+    const staticBots = await getStaticBots();
+    updateListStrategies(staticBots);
 };
 
+// Get saved strategies = return static bots only
 export const getSavedWorkspaces = async () => {
-    try {
-        return JSON.parse(LZString.decompress(await localForage.getItem('saved_workspaces'))) || [];
-    } catch (e) {
-        return [];
-    }
+    return await getStaticBots();
 };
 
+// Prevent deleting static bots
 export const removeExistingWorkspace = async workspace_id => {
-    const workspaces = await getSavedWorkspaces();
-    const current_workspace_index = workspaces.findIndex(workspace => workspace.id === workspace_id);
-
-    if (current_workspace_index >= 0) {
-        workspaces.splice(current_workspace_index, 1);
-    }
-
-    await localForage.setItem('saved_workspaces', LZString.compress(JSON.stringify(workspaces)));
+    console.warn(`Remove blocked for static bot: ${workspace_id}`);
+    return false;
 };
 
+// Ensure xml has dbot flag
 export const convertStrategyToIsDbot = xml_dom => {
     if (!xml_dom) return;
     if (xml_dom.hasAttribute('collection') && xml_dom.getAttribute('collection') === 'true') {
@@ -75,4 +58,25 @@ export const convertStrategyToIsDbot = xml_dom => {
     }
     xml_dom.setAttribute('is_dbot', 'true');
     return xml_dom;
+};
+
+// Load and inject a strategy into Blockly
+export const loadStrategy = async strategy_id => {
+    const workspaces = await getStaticBots();
+    const strategy = workspaces.find(ws => ws.id === strategy_id);
+
+    if (!strategy) return false;
+
+    try {
+        const parser = new DOMParser();
+        const xmlDom = parser.parseFromString(strategy.xml, 'text/xml').documentElement;
+        const convertedXml = convertStrategyToIsDbot(xmlDom);
+
+        Blockly.Xml.domToWorkspace(convertedXml, Blockly.derivWorkspace);
+        Blockly.derivWorkspace.current_strategy_id = strategy_id;
+        return true;
+    } catch (error) {
+        console.error('Error loading strategy:', error);
+        return false;
+    }
 };

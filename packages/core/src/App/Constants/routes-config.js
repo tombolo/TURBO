@@ -353,13 +353,13 @@ const getModules = () => {
             path: routes.old_traders_hub,
             component: RedirectToNewTradersHub,
             is_authenticated: false,
-            getTitle: () => localize("Nilote Trader's Hub"),
+            getTitle: () => localize("Nilote's Hub"),
         },
         {
             path: routes.traders_hub,
             component: RootComponent,
             is_authenticated: false,
-            getTitle: () => localize("Nilote Trader's Hub"),
+            getTitle: () => localize("Nilote's Hub"),
         },
         {
             path: routes.callback_page,

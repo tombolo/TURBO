@@ -402,7 +402,7 @@ const ToggleMenuDrawer = observer(({ platform_config }) => {
                                     <MenuLink
                                         link_to={handleTradershubRedirect()}
                                         icon={'IcAppstoreTradersHubHome'}
-                                        text={localize("Nilote Trader's Hub")}
+                                        text={localize("Nilote's Hub")}
                                         onClickLink={toggleDrawer}
                                         is_active={route === routes.traders_hub}
                                     />
