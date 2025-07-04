@@ -9,7 +9,7 @@ const DerivShortLogo = () => {
                 <img
                     src={LOGO}
                     alt='Deriv Short Logo'
-                    style={{ height: '42px', width: 'auto' }}
+                    style={{ height: '35px', width: 'auto' }}
                 />
             </StaticUrl>
         </div>
