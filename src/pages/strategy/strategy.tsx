@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import styles from './strategy.module.css';
+import styles from './strategy.css';
 
 type TickData = {
     value: number;
